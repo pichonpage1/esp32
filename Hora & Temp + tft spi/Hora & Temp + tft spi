@@ -6,8 +6,8 @@
 
 TFT_eSPI tft = TFT_eSPI();
 
-const char* ssid = "SETUP-8397-2";
-const char* password = "earth5004direct2";
+const char* ssid = "tu ssid"; // coloca el nombre de tu red 2.4g
+const char* password = "password"; // coloca la contraseña
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
