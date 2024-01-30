@@ -1,4 +1,4 @@
-Sí, este es el código proporcionado. Aquí hay una descripción general de lo que hace:
+Descripción general de lo que hace:
 
 1. **Inicialización y Configuración:**
    - Se incluyen las bibliotecas necesarias.
