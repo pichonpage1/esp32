@@ -95,7 +95,7 @@ void loop() {
           if (celsiusTemperature > -100 && celsiusTemperature < 100) {
             temperature = celsiusTemperature;
             tft.setTextSize(5);
-            tft.setCursor(50, ysecs + 80);
+            tft.setCursor(70, ysecs + 80);
             //tft.print("Temp: ");
             tft.print(temperature);
             tft.print(" C");  // Agrega el símbolo de grados Celsius con "o"
