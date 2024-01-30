@@ -1,0 +1,115 @@
+#include <TFT_eSPI.h>
+#include <SPI.h>
+#include <WiFi.h>
+#include <NTPClient.h>
+#include <HTTPClient.h>
+
+TFT_eSPI tft = TFT_eSPI();
+
+const char* ssid = "SETUP-8397-2";
+const char* password = "earth5004direct2";
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP);
+
+const char* ntpServerName = "time.nist.gov";
+const char* weatherApiUrl = "http://api.openweathermap.org/data/2.5/weather?q=Omaha,NE,US&appid=30cd9db64953cf977e5269aa6a543a06";
+
+unsigned long targetTime = 0;
+float temperature = 0.0;
+
+void setup() {
+  Serial.begin(115200);
+  tft.init();
+  tft.setRotation(0);
+  tft.fillScreen(TFT_BLACK);
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+
+  timeClient.begin();
+  timeClient.setTimeOffset(-6 * 3600);
+}
+
+void loop() {
+  if (targetTime < millis()) {
+    timeClient.update();
+    unsigned long epochTime = timeClient.getEpochTime();
+    int hours = timeClient.getHours();
+    int minutes = timeClient.getMinutes();
+    int seconds = timeClient.getSeconds();
+
+    int xpos = 0;
+    int ypos = 10;
+    int ysecs = ypos + 24;
+
+    tft.setTextSize(1);  // Cambia el tamaño de fuente a '1' para todos los números
+
+    if (hours < 10) xpos += tft.drawChar('0', xpos, ypos, 8);
+    xpos += tft.drawNumber(hours, xpos, ypos, 8);
+    xpos += tft.drawChar(':', xpos, ypos - 8, 8);
+    if (minutes < 10) xpos += tft.drawChar('0', xpos, ypos, 8);
+    xpos += tft.drawNumber(minutes, xpos, ypos, 8);
+    xpos += tft.drawChar(':', xpos, ysecs, 6);
+    if (seconds < 10) xpos += tft.drawChar('0', xpos, ysecs, 6);
+    tft.drawNumber(seconds, xpos, ysecs, 6);
+
+    // Obtén la temperatura de Omaha
+    if (WiFi.status() == WL_CONNECTED) {
+      HTTPClient http;
+      http.begin(weatherApiUrl);
+      int httpResponseCode = http.GET();
+
+      Serial.print("HTTP Response Code: ");
+      Serial.println(httpResponseCode);
+
+      if (httpResponseCode == 200) {
+        String payload = http.getString();
+        // Procesa el JSON para extraer la temperatura
+        int tempIndex = payload.indexOf("\"temp\":");
+        if (tempIndex > 0) {
+          tempIndex += 7;
+          String tempValue = payload.substring(tempIndex, tempIndex + 5);
+          Serial.println("Temperature JSON Part:");
+          Serial.println(tempValue);
+
+          // Convierte la temperatura de kelvins a grados Celsius
+          float kelvinTemperature = tempValue.toFloat();
+          float celsiusTemperature = kelvinTemperature - 273.15;
+
+          // Imprime la cadena JSON completa
+          Serial.println("Full JSON Response:");
+          Serial.println(payload);
+
+          // Imprime la temperatura en grados Celsius
+          Serial.print("Temperature in Celsius: ");
+          Serial.println(celsiusTemperature);
+
+          // Intenta convertir la temperatura solo si no está en el rango de valores incorrectos
+          if (celsiusTemperature > -100 && celsiusTemperature < 100) {
+            temperature = celsiusTemperature;
+            tft.setTextSize(8);
+            tft.setCursor(30, ysecs + 80);  // Ajusta la posición vertical según tus preferencias
+            tft.print(temperature);
+            tft.println(" C");
+          } else {
+            Serial.println("Invalid temperature value.");
+          }
+        } else {
+          Serial.println("Temperature JSON part not found.");
+        }
+      } else {
+        Serial.println("Failed to get temperature. Check response code.");
+      }
+      http.end();
+    }
+
+    targetTime = millis() + 10000;
+  }
+}
