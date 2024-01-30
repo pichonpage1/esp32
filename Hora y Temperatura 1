@@ -94,10 +94,11 @@ void loop() {
           // Intenta convertir la temperatura solo si no está en el rango de valores incorrectos
           if (celsiusTemperature > -100 && celsiusTemperature < 100) {
             temperature = celsiusTemperature;
-            tft.setTextSize(8);
-            tft.setCursor(30, ysecs + 80);  // Ajusta la posición vertical según tus preferencias
+            tft.setTextSize(5);
+            tft.setCursor(50, ysecs + 80);
+            //tft.print("Temp: ");
             tft.print(temperature);
-            tft.println(" C");
+            tft.print(" C");  // Agrega el símbolo de grados Celsius con "o"
           } else {
             Serial.println("Invalid temperature value.");
           }
